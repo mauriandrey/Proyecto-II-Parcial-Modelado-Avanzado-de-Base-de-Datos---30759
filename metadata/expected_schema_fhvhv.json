@@ -1,0 +1,48 @@
+{
+  "service_type": "fhvhv",
+  "description": "Esquema esperado para NYC TLC High Volume FHV Trip Records 2023",
+  "source": "https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page",
+  "notes": "FHVHV no tiene total_amount directo. Se calcula como suma de componentes de tarifa.",
+  "fields": [
+    {"name": "hvfhs_license_num",    "type": "string",    "nullable": false, "critical": true},
+    {"name": "dispatching_base_num", "type": "string",    "nullable": true,  "critical": false},
+    {"name": "originating_base_num", "type": "string",    "nullable": true,  "critical": false},
+    {"name": "request_datetime",     "type": "timestamp", "nullable": true,  "critical": false},
+    {"name": "on_scene_datetime",    "type": "timestamp", "nullable": true,  "critical": false},
+    {"name": "pickup_datetime",      "type": "timestamp", "nullable": false, "critical": true},
+    {"name": "dropoff_datetime",     "type": "timestamp", "nullable": false, "critical": true},
+    {"name": "PULocationID",         "type": "long",      "nullable": false, "critical": true},
+    {"name": "DOLocationID",         "type": "long",      "nullable": false, "critical": true},
+    {"name": "trip_miles",           "type": "double",    "nullable": false, "critical": true},
+    {"name": "trip_time",            "type": "long",      "nullable": true,  "critical": false},
+    {"name": "base_passenger_fare",  "type": "double",    "nullable": false, "critical": true},
+    {"name": "tolls",                "type": "double",    "nullable": true,  "critical": false},
+    {"name": "bcf",                  "type": "double",    "nullable": true,  "critical": false},
+    {"name": "sales_tax",            "type": "double",    "nullable": true,  "critical": false},
+    {"name": "congestion_surcharge", "type": "double",    "nullable": true,  "critical": false},
+    {"name": "airport_fee",          "type": "double",    "nullable": true,  "critical": false},
+    {"name": "tips",                 "type": "double",    "nullable": true,  "critical": false},
+    {"name": "driver_pay",           "type": "double",    "nullable": true,  "critical": false},
+    {"name": "shared_request_flag",  "type": "string",    "nullable": true,  "critical": false},
+    {"name": "shared_match_flag",    "type": "string",    "nullable": true,  "critical": false},
+    {"name": "wav_request_flag",     "type": "string",    "nullable": true,  "critical": false},
+    {"name": "wav_match_flag",       "type": "string",    "nullable": true,  "critical": false}
+  ],
+  "column_mapping_to_canonical": {
+    "hvfhs_license_num":    "vendor_id",
+    "pickup_datetime":      "pickup_datetime",
+    "dropoff_datetime":     "dropoff_datetime",
+    "PULocationID":         "pickup_location_id",
+    "DOLocationID":         "dropoff_location_id",
+    "trip_miles":           "trip_distance",
+    "base_passenger_fare":  "fare_amount",
+    "tolls":                "tolls_amount",
+    "tips":                 "tip_amount",
+    "congestion_surcharge": "congestion_surcharge",
+    "airport_fee":          "airport_fee",
+    "sales_tax":            "mta_tax"
+  },
+  "derived_fields": {
+    "total_amount": "base_passenger_fare + COALESCE(tolls,0) + COALESCE(bcf,0) + COALESCE(sales_tax,0) + COALESCE(congestion_surcharge,0) + COALESCE(airport_fee,0) + COALESCE(tips,0)"
+  }
+}

@@ -1,0 +1,176 @@
+{
+  "business_rules_version": "1.0",
+  "description": "Reglas de calidad y validación de negocio para datos NYC TLC",
+  "rules": [
+    {
+      "rule_id": "BR-001",
+      "name": "null_pickup_datetime",
+      "description": "Fecha de recogida no puede ser nula",
+      "column": "pickup_datetime",
+      "condition": "IS NULL",
+      "rejection_stage": "BRONZE",
+      "rejection_category": "NULL_CRITICAL_FIELD",
+      "severity": "CRITICAL"
+    },
+    {
+      "rule_id": "BR-002",
+      "name": "null_dropoff_datetime",
+      "description": "Fecha de llegada no puede ser nula",
+      "column": "dropoff_datetime",
+      "condition": "IS NULL",
+      "rejection_stage": "BRONZE",
+      "rejection_category": "NULL_CRITICAL_FIELD",
+      "severity": "CRITICAL"
+    },
+    {
+      "rule_id": "BR-003",
+      "name": "null_pickup_location",
+      "description": "Zona de recogida no puede ser nula",
+      "column": "pickup_location_id",
+      "condition": "IS NULL",
+      "rejection_stage": "BRONZE",
+      "rejection_category": "NULL_CRITICAL_FIELD",
+      "severity": "CRITICAL"
+    },
+    {
+      "rule_id": "BR-004",
+      "name": "null_dropoff_location",
+      "description": "Zona de destino no puede ser nula",
+      "column": "dropoff_location_id",
+      "condition": "IS NULL",
+      "rejection_stage": "BRONZE",
+      "rejection_category": "NULL_CRITICAL_FIELD",
+      "severity": "CRITICAL"
+    },
+    {
+      "rule_id": "BR-005",
+      "name": "invalid_date_order",
+      "description": "La fecha de recogida no puede ser posterior a la de llegada",
+      "column": "pickup_datetime",
+      "condition": "pickup_datetime >= dropoff_datetime",
+      "rejection_stage": "SILVER",
+      "rejection_category": "INVALID_DATE_ORDER",
+      "severity": "CRITICAL"
+    },
+    {
+      "rule_id": "BR-006",
+      "name": "future_pickup_datetime",
+      "description": "La fecha de recogida no puede ser en el futuro",
+      "column": "pickup_datetime",
+      "condition": "year > 2024 OR year < 2018",
+      "rejection_stage": "SILVER",
+      "rejection_category": "OUT_OF_RANGE_DATE",
+      "severity": "HIGH"
+    },
+    {
+      "rule_id": "BR-007",
+      "name": "negative_fare_amount",
+      "description": "La tarifa base no puede ser negativa",
+      "column": "fare_amount",
+      "condition": "fare_amount < 0",
+      "rejection_stage": "SILVER",
+      "rejection_category": "NEGATIVE_AMOUNT",
+      "severity": "HIGH"
+    },
+    {
+      "rule_id": "BR-008",
+      "name": "zero_or_negative_total",
+      "description": "El total pagado debe ser positivo",
+      "column": "total_amount",
+      "condition": "total_amount <= 0",
+      "rejection_stage": "SILVER",
+      "rejection_category": "INVALID_AMOUNT",
+      "severity": "HIGH"
+    },
+    {
+      "rule_id": "BR-009",
+      "name": "zero_or_negative_distance",
+      "description": "La distancia del viaje debe ser positiva",
+      "column": "trip_distance",
+      "condition": "trip_distance <= 0",
+      "rejection_stage": "SILVER",
+      "rejection_category": "INVALID_DISTANCE",
+      "severity": "MEDIUM",
+      "action": "MARK_SUSPICIOUS"
+    },
+    {
+      "rule_id": "BR-010",
+      "name": "excessive_trip_duration",
+      "description": "La duración del viaje no puede exceder 480 minutos (8 horas)",
+      "column": "trip_duration_minutes",
+      "condition": "trip_duration_minutes > 480 OR trip_duration_minutes <= 0",
+      "rejection_stage": "SILVER",
+      "rejection_category": "INVALID_DURATION",
+      "severity": "MEDIUM",
+      "action": "MARK_SUSPICIOUS"
+    },
+    {
+      "rule_id": "BR-011",
+      "name": "unrealistic_speed",
+      "description": "La velocidad promedio no puede exceder 100 mph",
+      "column": "average_speed_mph",
+      "condition": "average_speed_mph > 100",
+      "rejection_stage": "SILVER",
+      "rejection_category": "UNREALISTIC_SPEED",
+      "severity": "MEDIUM",
+      "action": "MARK_SUSPICIOUS"
+    },
+    {
+      "rule_id": "BR-012",
+      "name": "excessive_tip_percentage",
+      "description": "El porcentaje de propina no puede superar el 100% de la tarifa",
+      "column": "tip_percentage",
+      "condition": "tip_percentage > 100",
+      "rejection_stage": "SILVER",
+      "rejection_category": "EXCESSIVE_TIP",
+      "severity": "LOW",
+      "action": "MARK_SUSPICIOUS"
+    },
+    {
+      "rule_id": "BR-013",
+      "name": "technical_duplicate",
+      "description": "Registros duplicados con igual trip_id deben eliminarse",
+      "column": "trip_id",
+      "condition": "ROW_NUMBER() OVER (PARTITION BY trip_id ORDER BY ingestion_timestamp) > 1",
+      "rejection_stage": "SILVER",
+      "rejection_category": "TECHNICAL_DUPLICATE",
+      "severity": "HIGH"
+    },
+    {
+      "rule_id": "BR-014",
+      "name": "null_fare_amount",
+      "description": "La tarifa base no puede ser nula",
+      "column": "fare_amount",
+      "condition": "IS NULL",
+      "rejection_stage": "BRONZE",
+      "rejection_category": "NULL_CRITICAL_FIELD",
+      "severity": "CRITICAL"
+    },
+    {
+      "rule_id": "BR-015",
+      "name": "null_total_amount",
+      "description": "El total pagado no puede ser nulo",
+      "column": "total_amount",
+      "condition": "IS NULL",
+      "rejection_stage": "BRONZE",
+      "rejection_category": "NULL_CRITICAL_FIELD",
+      "severity": "CRITICAL"
+    }
+  ],
+  "suspicious_trip_conditions": [
+    "trip_distance <= 0",
+    "total_amount <= 0",
+    "fare_amount < 0",
+    "trip_duration_minutes <= 0",
+    "trip_duration_minutes > 480",
+    "average_speed_mph > 100",
+    "tip_percentage > 100",
+    "pickup_datetime > dropoff_datetime"
+  ],
+  "airport_location_ids": [1, 132, 138],
+  "service_type_labels": {
+    "yellow": "NYC Yellow Taxi",
+    "green": "NYC Green Taxi",
+    "fhvhv": "High Volume FHV (Uber/Lyft)"
+  }
+}
