@@ -1,0 +1,129 @@
+# ═══════════════════════════════════════════════════════════════════
+# ETL SPARK PARQUET ADVANCED — Configuración optimizada para Windows
+# Hardware target: Windows 11, 32 GB RAM, 20+ GB disco libre
+# ═══════════════════════════════════════════════════════════════════
+
+project:
+  name: "ETL Spark Parquet Advanced - NYC TLC"
+  version: "1.1.0"
+  description: "Pipeline ETL avanzado - Arquitectura Data Lakehouse"
+
+# ─── Rutas del sistema ───────────────────────────────────────────
+paths:
+  base_dir: "."
+  data_dir: "data"
+  raw_dir: "data/raw"
+  bronze_dir: "data/bronze"
+  silver_dir: "data/silver"
+  gold_dir: "data/gold"
+  quarantine_dir: "data/quarantine"
+  audit_dir: "data/audit"
+  metadata_dir: "metadata"
+  logs_dir: "logs"
+  warehouse_dir: "data/warehouse"
+
+# ─── Spark optimizado para 32GB RAM Windows ──────────────────────
+# En local mode: driver = único ejecutor. No asignar todo el RAM a Spark.
+# Reservar ~4GB para SO, ~4GB para DuckDB, ~4GB para Python/Jupyter.
+spark:
+  app_name: "ETL_NYC_TLC_Parquet_Advanced"
+  master: "local[4]"              # Usar 4 cores (no todos para no saturar)
+  driver_memory: "10g"            # Spark JVM heap: 10GB de 32
+  executor_memory: "10g"          # En local mode = mismo que driver
+  driver_max_result_size: "2g"    # Limitar collect() accidentales
+  log_level: "WARN"
+
+  # Optimización 1: Esquema explícito
+  merge_schema: false
+
+  # Optimización 2: Predicate pushdown
+  parquet_filter_pushdown: true
+
+  # Optimización 3: AQE adaptativo
+  adaptive_query_enabled: true
+  adaptive_coalesce_enabled: true
+
+  # Optimización 4: Particiones reducidas (40M records / 50 = 800K por partición)
+  shuffle_partitions: 50          # Reducido de 200 para Windows con pocos cores
+
+  # Optimización 5: Tamaño de bloque — 64MB para equilibrio escritura/lectura
+  max_partition_bytes_mb: 64
+  open_cost_bytes_mb: 4
+
+  # Control de archivos de salida
+  max_output_files: 2
+
+# ─── Base de datos DuckDB ─────────────────────────────────────────
+database:
+  type: "duckdb"
+  path: "data/warehouse/nyc_tlc.duckdb"
+  schema: "main"
+  threads: 4
+  memory_limit_gb: 4              # DuckDB usa 4GB (independiente de Spark)
+
+# ─── Fuentes de datos NYC TLC ─────────────────────────────────────
+data_sources:
+  yellow:
+    base_url: "https://d37ci6vzurychx.cloudfront.net/trip-data"
+    service_type: "yellow"
+    files:
+      - {name: "yellow_tripdata_2023-01.parquet", year: "2023", month: "01"}
+      - {name: "yellow_tripdata_2023-02.parquet", year: "2023", month: "02"}
+      - {name: "yellow_tripdata_2023-03.parquet", year: "2023", month: "03"}
+      - {name: "yellow_tripdata_2023-04.parquet", year: "2023", month: "04"}
+      - {name: "yellow_tripdata_2022-01.parquet", year: "2022", month: "01"}
+      - {name: "yellow_tripdata_2022-02.parquet", year: "2022", month: "02"}
+      - {name: "yellow_tripdata_2021-01.parquet", year: "2021", month: "01"}
+      - {name: "yellow_tripdata_2020-01.parquet", year: "2020", month: "01"}
+
+  green:
+    base_url: "https://d37ci6vzurychx.cloudfront.net/trip-data"
+    service_type: "green"
+    files:
+      - {name: "green_tripdata_2023-01.parquet", year: "2023", month: "01"}
+      - {name: "green_tripdata_2023-02.parquet", year: "2023", month: "02"}
+
+  fhvhv:
+    base_url: "https://d37ci6vzurychx.cloudfront.net/trip-data"
+    service_type: "fhvhv"
+    files:
+      - {name: "fhvhv_tripdata_2023-01.parquet", year: "2023", month: "01"}
+
+# ─── Archivos Parquet problemáticos ──────────────────────────────
+bad_parquet_sources:
+  base_url: "https://github.com/apache/parquet-testing/raw/master/data"
+  files:
+    - "PARQUET-1481.parquet"
+    - "nation.dict-malformed.parquet"
+    - "PARQUET-1382.parquet"
+
+# ─── Reglas de calidad ────────────────────────────────────────────
+quality_rules:
+  max_trip_duration_minutes: 480
+  min_trip_duration_minutes: 0
+  max_speed_mph: 100
+  max_tip_percentage: 100
+  min_fare_amount: 0.0
+  min_total_amount: 0.0
+  min_trip_distance: 0.0
+  min_passengers: 0
+  max_passengers: 9
+  valid_payment_types: [1, 2, 3, 4, 5, 6]
+  reference_year_min: 2018
+  reference_year_max: 2024
+  airport_location_ids: [1, 132, 138]
+  max_rejection_pct: 80.0
+
+# ─── Procesamiento anti-OOM ───────────────────────────────────────
+processing:
+  idempotent: true
+  # Particiones de escritura reducidas (1-2 por servicio = archivos manejables)
+  bronze_partitions: 2
+  silver_partitions: 2
+  gold_partitions: 1
+  # Columnas críticas no nulas
+  critical_null_columns:
+    - pickup_datetime
+    - dropoff_datetime
+    - pickup_location_id
+    - dropoff_location_id
