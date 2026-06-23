@@ -1,0 +1,45 @@
+# ═══════════════════════════════════════════════════════════════
+# Dependencias del Proyecto ETL Spark Parquet Advanced
+# Proyecto: NYC TLC Trip Records — Data Lakehouse Pipeline
+# Python >= 3.9 recomendado
+# ═══════════════════════════════════════════════════════════════
+
+# ── Motor de procesamiento distribuido ──────────────────────────
+pyspark==3.5.0
+
+# ── Base de datos analítica (destino final) ─────────────────────
+duckdb>=0.10.0
+
+# ── Descarga y HTTP ─────────────────────────────────────────────
+requests>=2.31.0
+
+# ── Serialización de configuración ──────────────────────────────
+pyyaml>=6.0.1
+
+# ── Análisis auxiliar (solo para notebooks e inspección) ────────
+pandas>=2.0.0
+numpy>=1.24.0
+
+# ── Visualización (solo Notebook 05) ────────────────────────────
+matplotlib>=3.7.0
+
+# ── Lectura de archivos Parquet (Pandas auxiliar) ───────────────
+pyarrow>=12.0.0
+fastparquet>=2023.4.0
+
+# ── Jupyter (para ejecutar notebooks) ───────────────────────────
+jupyter>=1.0.0
+notebook>=7.0.0
+ipywidgets>=8.0.0
+
+# ── Utilidades ──────────────────────────────────────────────────
+tqdm>=4.65.0        # barras de progreso opcionales
+tabulate>=0.9.0     # formateo de tablas en consola
+
+# ── Java (requerido por PySpark) ─────────────────────────────────
+# Instalar Java 11 o 17 externamente:
+# Ubuntu/Debian: sudo apt-get install -y openjdk-11-jdk
+# MacOS:         brew install openjdk@11
+# Windows:       https://adoptium.net/
+# Verificar: java -version
+# Configurar: export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
